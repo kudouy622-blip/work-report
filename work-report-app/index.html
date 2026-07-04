@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>帰庫後作業日報システム</title>
+  <!-- Google Fonts (Noto Sans JP / Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons (必要最低限のみ使用) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  <!-- SheetJS for Excel Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+  <!-- App Wrapper (Smartphone Dedicated) -->
+  <div class="app-wrapper">
+    
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <h1>作業日報システム</h1>
+      </div>
+      
+      <!-- Simulator -->
+      <div class="simulator-panel">
+        <select id="user-simulator" class="sim-select">
+          <optgroup label="ドライバー">
+            <option value="driver-yamada" data-role="driver" data-name="山田 太郎" selected>山田 太郎 (ドライバー)</option>
+            <option value="driver-sato" data-role="driver" data-name="佐藤 次郎">佐藤 次郎 (ドライバー)</option>
+            <option value="driver-suzuki" data-role="driver" data-name="鈴木 一郎">鈴木 一郎 (ドライバー)</option>
+            <option value="driver-tanaka" data-role="driver" data-name="田中 三郎">田中 三郎 (ドライバー)</option>
+          </optgroup>
+          <optgroup label="管理者">
+            <option value="manager-takahashi" data-role="manager" data-name="高橋 茂">高橋 茂 (管理者)</option>
+          </optgroup>
+          <optgroup label="勤怠担当者">
+            <option value="attendance-watanabe" data-role="attendance" data-name="渡辺 花子">渡辺 花子 (勤怠担当)</option>
+          </optgroup>
+        </select>
+      </div>
+    </header>
+
+    <!-- Role Info Banner -->
+    <div id="role-banner" class="role-banner">
+      <span class="role-title" id="role-badge-text">ドライバー画面</span>
+      <span class="user-name"><i class="fa-solid fa-user"></i> <span id="current-user-display">山田 太郎</span></span>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      
+      <!-- ==================== 1. DRIVER VIEW ==================== -->
+      <section id="view-driver" class="view-section active">
+        <!-- Sub Tabs for Driver -->
+        <div class="view-tabs">
+          <button class="tab-btn active" id="btn-driver-input" data-tab="input">日報入力</button>
+          <button class="tab-btn" id="btn-driver-history" data-tab="history">提出履歴</button>
+        </div>
+
+        <!-- Input Tab Content -->
+        <div id="driver-input-content" class="tab-content active">
+          <form id="report-form" class="vertical-form">
+            <input type="hidden" id="edit-report-id" value="">
+            
+            <div class="card">
+              <!-- Date -->
+              <div class="form-group">
+                <label for="report-date">日付</label>
+                <input type="date" id="report-date" readonly required>
+              </div>
+
+              <!-- Driver Name -->
+              <div class="form-group">
+                <label for="driver-name">氏名</label>
+                <input type="text" id="driver-name" readonly required>
+              </div>
+
+              <!-- Return Time -->
+              <div class="form-group">
+                <label for="return-time">帰庫時間</label>
+                <input type="time" id="return-time" required>
+              </div>
+
+              <!-- Work Start Time -->
+              <div class="form-group">
+                <label for="work-start-time">作業開始時間</label>
+                <input type="time" id="work-start-time" required>
+              </div>
+
+              <!-- Work End Time -->
+              <div class="form-group">
+                <label for="work-end-time">作業終了時間</label>
+                <input type="time" id="work-end-time" required>
+              </div>
+
+              <!-- Break Time -->
+              <div class="form-group">
+                <label for="break-time">休憩時間</label>
+                <select id="break-time" required>
+                  <option value="0">なし (0分)</option>
+                  <option value="15">15分</option>
+                  <option value="30">30分</option>
+                  <option value="45">45分</option>
+                  <option value="60" selected>60分 (1時間)</option>
+                  <option value="90">90分 (1.5時間)</option>
+                  <option value="120">120分 (2時間)</option>
+                  <option value="custom">その他 (直接入力)</option>
+                </select>
+                
+                <div id="custom-break-container" class="custom-break-container hidden">
+                  <input type="number" id="custom-break-time" min="0" max="600" placeholder="分数を入力">
+                  <span class="unit">分</span>
+                </div>
+              </div>
+
+              <!-- Work Category -->
+              <div class="form-group">
+                <label for="work-category">作業区分</label>
+                <select id="work-category" required>
+                  <option value="洗車" selected>洗車</option>
+                  <option value="車内清掃">車内清掃</option>
+                  <option value="車両点検">車両点検</option>
+                  <option value="整備">整備</option>
+                  <option value="修理">修理</option>
+                  <option value="タイヤ交換">タイヤ交換</option>
+                  <option value="オイル交換">オイル交換</option>
+                  <option value="荷台整理">荷台整理</option>
+                  <option value="倉庫作業">倉庫作業</option>
+                  <option value="その他">その他</option>
+                </select>
+              </div>
+
+              <!-- Work Content -->
+              <div class="form-group">
+                <label for="work-content">作業内容の詳細</label>
+                <textarea id="work-content" placeholder="作業の具体的な内容を入力してください" rows="4" required></textarea>
+              </div>
+            </div>
+
+            <!-- Warning Banner -->
+            <div id="time-warning" class="warning-banner hidden">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>作業開始時間が帰庫時間より前の時刻です。</span>
+            </div>
+
+            <!-- Calculated Work Duration -->
+            <div class="duration-card">
+              <span class="duration-label">計算された作業時間</span>
+              <span class="duration-value"><span id="calc-hours">0</span>時間<span id="calc-minutes">00</span>分</span>
+              <span class="duration-decimal">（実働 <span id="calc-decimal">0.00</span> 時間）</span>
+            </div>
+
+            <!-- Spacer for bottom fixed button -->
+            <div class="bottom-spacer"></div>
+
+            <!-- Sticky Bottom Actions -->
+            <div class="fixed-actions-footer">
+              <button type="submit" id="submit-btn" class="btn btn-navy btn-large">
+                <span id="btn-submit-text">日報を登録する (送信)</span>
+              </button>
+              <button type="button" id="cancel-edit-btn" class="btn btn-grey btn-large hidden">
+                編集をキャンセル
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- History Tab Content -->
+        <div id="driver-history-content" class="tab-content">
+          <div class="section-title">
+            <span><span id="history-driver-name">山田 太郎</span> さんの提出履歴</span>
+          </div>
+          <div id="driver-history-list" class="card-list">
+            <!-- Dynamic Content -->
+            <div class="empty-state">
+              <p>提出済みの作業日報はありません</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 2. MANAGER VIEW ==================== -->
+      <section id="view-manager" class="view-section">
+        <div class="view-tabs">
+          <button class="tab-btn active" id="tab-pending">承認待ち (<span id="pending-count">0</span>)</button>
+          <button class="tab-btn" id="tab-processed">処理履歴 (<span id="processed-count">0</span>)</button>
+        </div>
+
+        <!-- Pending Reports -->
+        <div id="pending-container" class="tab-content active">
+          <div id="manager-pending-list" class="card-list">
+            <!-- Dynamic Content -->
+            <div class="empty-state">
+              <p>承認待ちの作業日報はありません</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Processed Reports -->
+        <div id="processed-container" class="tab-content">
+          <div id="manager-processed-list" class="card-list">
+            <!-- Dynamic Content -->
+            <div class="empty-state">
+              <p>処理履歴はありません</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 3. ATTENDANCE VIEW ==================== -->
+      <section id="view-attendance" class="view-section">
+        
+        <!-- Filters Card -->
+        <div class="card filter-card">
+          <div class="filter-row">
+            <div class="form-group-filter">
+              <label for="filter-month">対象月</label>
+              <select id="filter-month">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+            <div class="form-group-filter">
+              <label for="filter-driver">乗務員</label>
+              <select id="filter-driver">
+                <option value="all">全員を表示</option>
+                <option value="山田 太郎">山田 太郎</option>
+                <option value="佐藤 次郎">佐藤 次郎</option>
+                <option value="鈴木 一郎">鈴木 一郎</option>
+                <option value="田中 三郎">田中 三郎</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button type="button" id="btn-reset-filters" class="btn btn-grey btn-sm">条件クリア</button>
+          </div>
+        </div>
+
+        <!-- Attendance Stats / Meta -->
+        <div class="attendance-meta">
+          <span>表示件数: <strong id="table-display-count">0</strong> / 総数: <span id="table-total-count">0</span> 件</span>
+          <div class="select-all-row">
+            <input type="checkbox" id="th-check-all"> <label for="th-check-all" class="select-all-label">すべて選択</label>
+          </div>
+        </div>
+
+        <!-- Mobile Card List for Attendance (Replaces desktop table) -->
+        <div id="attendance-card-list" class="card-list">
+          <!-- Dynamic Content -->
+          <div class="empty-state">
+            <p>管理者承認済みの日報はありません</p>
+          </div>
+        </div>
+
+        <div class="bottom-spacer-large"></div>
+
+        <!-- Sticky Bottom Actions for Attendance -->
+        <div class="fixed-actions-footer attendance-footer">
+          <button type="button" id="btn-bulk-complete" class="btn btn-green" disabled>
+            選択日報を確定する
+          </button>
+          <button type="button" id="btn-export-excel" class="btn btn-navy">
+            <i class="fa-solid fa-file-excel"></i> Excel出力
+          </button>
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- SEND BACK MODAL -->
+  <div id="sendback-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>日報の差戻し</h3>
+        <button type="button" class="close-btn" id="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-intro">
+          <strong><span id="modal-driver-name">運転手名</span></strong> さんの 
+          <strong><span id="modal-date">2026-07-04</span></strong> の日報を差し戻します。
+        </p>
+        <div class="form-group">
+          <label for="sendback-reason">差戻し理由</label>
+          <textarea id="sendback-reason" rows="4" placeholder="差戻し理由を入力してください。" required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-cancel-sendback" class="btn btn-grey">キャンセル</button>
+        <button type="button" id="btn-confirm-sendback" class="btn btn-red">差戻し実行</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Main Application Logic Script -->
+  <script src="app.js"></script>
+</body>
+</html>
